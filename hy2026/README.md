@@ -50,3 +50,16 @@ Ukryte pod „Tryb demo” w sidebarze. Login: mieszkaniec → portal, org/JST/e
 ## Skrypty
 
 - `npm run dev` / `build` / `typecheck` / `lint`
+
+## Appwrite (backend bootstrap)
+
+TablesDB schema + buckets + function registration (no Next.js wiring yet). Needs Appwrite SDK **24+** and API key scopes including **`tables.write`** (not only legacy `collections.*`).
+
+```bash
+cp .env.appwrite.example .env.appwrite   # fill credentials + scopes
+pip install -r scripts/requirements-appwrite.txt
+python scripts/setup_appwrite.py
+python scripts/setup_appwrite.py --seed
+```
+
+Details: [scripts/README.md](scripts/README.md). Function stubs: [backend/functions/](backend/functions/).
