@@ -108,7 +108,9 @@ export function MatchResults() {
         description={`Na podstawie: „${result.query.slice(0, 160)}${result.query.length > 160 ? "…" : ""}”. Sugestia Hubu nie zastępuje Twojej decyzji.`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <AiBadge>{result.manual ? "Katalog + tagi" : "Dopasowanie AI"}</AiBadge>
+            <AiBadge busy={pending}>
+              {result.manual ? "Katalog + tagi" : "Dopasowanie AI"}
+            </AiBadge>
             {pending ? <span className="text-xs text-muted-foreground">Aktualizuję…</span> : null}
           </div>
         }

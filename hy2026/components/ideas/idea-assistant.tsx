@@ -4,9 +4,11 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 
 import { AiBadge } from "@/components/ai/ai-badge"
+import { AiGenerateButton } from "@/components/ai/ai-generate-button"
 import { Button } from "@/components/ui/button"
 import { getServices } from "@/lib/services"
 import type { IdeaCard } from "@/types/domain"
+import { cn } from "cn"
 
 export function IdeaAssistant({
   idea,
@@ -31,10 +33,15 @@ export function IdeaAssistant({
   }, [])
 
   return (
-    <aside className="h-fit rounded-[min(var(--radius-4xl),24px)] border border-border bg-muted/40 p-4">
+    <aside
+      className={cn(
+        "h-fit rounded-[min(var(--radius-4xl),24px)] border border-border bg-muted/40 p-4",
+        loading && "ai-magic-surface--busy"
+      )}
+    >
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <AiBadge>Asystent kreatora</AiBadge>
+          <AiBadge busy={loading}>Asystent kreatora</AiBadge>
           <p className="mt-2 text-xs text-muted-foreground">
             Podpowiedzi możesz zignorować — nic nie zapisujemy automatycznie.
           </p>
@@ -44,9 +51,9 @@ export function IdeaAssistant({
         </Button>
       </div>
       {loading ? (
-        <p className="text-sm text-muted-foreground">Przygotowuję sugestie…</p>
+        <p className="relative z-[1] text-sm text-muted-foreground">Przygotowuję sugestie…</p>
       ) : (
-        <ul className="space-y-2 text-sm">
+        <ul className="relative z-[1] space-y-2 text-sm">
           {tips.map((t) => (
             <li key={t} className="rounded-xl bg-background/80 px-3 py-2">
               {t}
@@ -54,10 +61,17 @@ export function IdeaAssistant({
           ))}
         </ul>
       )}
-      <Button type="button" size="sm" variant="outline" className="mt-3" onClick={refresh}>
-        Odśwież sugestie
-      </Button>
-      <div className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
+      <AiGenerateButton
+        type="button"
+        size="sm"
+        variant="outline"
+        className="relative z-[1] mt-3"
+        busy={loading}
+        busyLabel="Odświeżam…"
+        idleLabel="Odśwież sugestie"
+        onClick={refresh}
+      />
+      <div className="relative z-[1] mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
         Kanwy Hubu:{" "}
         <Link href="/wiedza/kanwa-innowacji" className="underline">
           innowacji

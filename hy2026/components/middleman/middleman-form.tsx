@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
 import { AiBadge } from "@/components/ai/ai-badge"
+import { AiGenerateButton } from "@/components/ai/ai-generate-button"
 import { Button } from "@/components/ui/button"
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { Select } from "@/components/ui/select"
@@ -47,7 +48,7 @@ export function MiddlemanForm() {
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="font-heading text-3xl font-medium">Middleman Innowacji</h1>
-          <AiBadge>Asystent AI</AiBadge>
+          <AiBadge busy={loading}>Asystent AI</AiBadge>
         </div>
         <p className="text-muted-foreground">
           Dostosuj innowację do formy usługi publicznej według potrzeb Twojej instytucji. To
@@ -84,9 +85,12 @@ export function MiddlemanForm() {
             Nie podawaj danych osobowych mieszkańców — używaj opisu syntetycznego.
           </FieldDescription>
         </Field>
-        <Button type="submit" disabled={loading}>
-          {loading ? "Generuję plan…" : "Wygeneruj plan wdrożenia"}
-        </Button>
+        <AiGenerateButton
+          type="submit"
+          busy={loading}
+          busyLabel="Generuję plan…"
+          idleLabel="Wygeneruj plan wdrożenia"
+        />
       </form>
 
       {result ? (

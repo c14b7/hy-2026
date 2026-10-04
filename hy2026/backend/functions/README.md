@@ -1,5 +1,7 @@
 # Appwrite Functions (MOST)
 
+Szczegóły kontraktów i fallbacku: [docs/functions.md](../../docs/functions.md).
+
 Python 3.12 stubs using **TablesDB** (SDK 24+).
 
 | Function ID | Purpose |

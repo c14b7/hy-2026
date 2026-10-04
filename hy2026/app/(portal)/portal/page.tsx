@@ -74,18 +74,31 @@ export default function PortalHubPage() {
             href={a.href}
             className={cn(
               "group relative flex flex-col gap-3 rounded-2xl bg-card p-5 ring-1 ring-foreground/6 transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md",
-              a.accent && "bg-[linear-gradient(145deg,oklch(0.96_0.04_55),oklch(0.99_0.01_80))] ring-primary/20"
+              a.accent &&
+                "bg-[linear-gradient(145deg,oklch(0.96_0.04_55),oklch(0.99_0.01_80))] ring-primary/20 dark:bg-[linear-gradient(145deg,oklch(0.28_0.04_50),oklch(0.22_0.03_45))] dark:ring-primary/30"
             )}
           >
             {a.accent ? (
-              <span className="w-fit rounded-md bg-primary/12 px-2 py-0.5 text-[0.65rem] font-bold tracking-wide text-primary uppercase">
+              <span className="w-fit rounded-md bg-primary/12 px-2 py-0.5 text-[0.65rem] font-bold tracking-wide text-primary uppercase dark:bg-primary/20">
                 Start tutaj
               </span>
             ) : null}
-            <h2 className="font-heading text-base font-bold tracking-tight group-hover:text-primary">
+            <h2
+              className={cn(
+                "font-heading text-base font-bold tracking-tight group-hover:text-primary",
+                a.accent && "text-stone-900 dark:text-stone-50"
+              )}
+            >
               {a.title}
             </h2>
-            <p className="text-sm leading-relaxed text-muted-foreground">{a.description}</p>
+            <p
+              className={cn(
+                "text-sm leading-relaxed text-muted-foreground",
+                a.accent && "text-stone-600 dark:text-stone-300"
+              )}
+            >
+              {a.description}
+            </p>
             <span className="mt-auto inline-flex items-center gap-1 text-xs font-semibold text-primary">
               Przejdź <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
             </span>

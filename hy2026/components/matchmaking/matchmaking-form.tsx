@@ -9,6 +9,7 @@ import { normalizeCounty } from "@/lib/geo"
 import { getServices } from "@/lib/services"
 import { useRole } from "@/components/shared/role-provider"
 import { AiBadge } from "@/components/ai/ai-badge"
+import { AiGenerateButton } from "@/components/ai/ai-generate-button"
 import { PageHeader } from "@/components/shared/page-header"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -94,7 +95,7 @@ export function MatchmakingForm() {
         eyebrow="Matchmaking"
         title="Opisz swój problem"
         description="Napisz własnymi słowami, z czym potrzebujesz pomocy. MOST zaproponuje innowacje i organizacje — to sugestia, decyzja należy do Ciebie."
-        actions={<AiBadge>Asystent Hubu</AiBadge>}
+        actions={<AiBadge busy={loading}>Asystent Hubu</AiBadge>}
         className="border-0 pb-0"
       />
 
@@ -182,9 +183,13 @@ export function MatchmakingForm() {
       ) : null}
 
       <div className="flex flex-wrap gap-3">
-        <Button type="submit" size="lg" disabled={loading}>
-          {loading ? "Szukam dopasowań…" : "Znajdź rozwiązania"}
-        </Button>
+        <AiGenerateButton
+          type="submit"
+          size="lg"
+          busy={loading}
+          busyLabel="Szukam dopasowań…"
+          idleLabel="Znajdź rozwiązania"
+        />
         <Link
           href="/innowacje"
           className="self-center text-sm text-muted-foreground underline-offset-4 hover:underline"

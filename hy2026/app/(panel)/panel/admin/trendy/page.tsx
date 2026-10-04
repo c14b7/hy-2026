@@ -10,12 +10,15 @@ import type { TrendCluster } from "@/types/domain"
 export default function AdminTrendyPage() {
   const { role } = useRole()
   const [clusters, setClusters] = useState<TrendCluster[]>([])
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (role !== "admin") return
+    setLoading(true)
     getServices()
       .ai.getTrendClusters()
       .then(setClusters)
+      .finally(() => setLoading(false))
   }, [role])
 
   if (role !== "admin") {
@@ -33,13 +36,18 @@ export default function AdminTrendyPage() {
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="font-heading text-2xl font-medium">Trendy potrzeb</h1>
-          <AiBadge>Wgląd AI</AiBadge>
+          <AiBadge busy={loading}>Wgląd AI</AiBadge>
         </div>
         <p className="text-sm text-muted-foreground">
           Agregacja zgłoszeń mieszkańców według obszarów wyzwań. Obok klastrów widać surowe
           fragmenty zgłoszeń.
         </p>
       </div>
+      {loading && clusters.length === 0 ? (
+        <div className="ai-magic-surface--busy rounded-2xl border border-border p-8">
+          <p className="relative z-[1] text-sm text-muted-foreground">Buduję klastry…</p>
+        </div>
+      ) : null}
       <ul className="space-y-4">
         {clusters.map((c) => (
           <li key={c.challengeId} className="rounded-2xl border border-border p-4">

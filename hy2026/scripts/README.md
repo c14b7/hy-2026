@@ -1,5 +1,7 @@
 # Appwrite bootstrap (MOST) — TablesDB
 
+Pełna dokumentacja: [docs/setup.md](../docs/setup.md), [docs/data-layer.md](../docs/data-layer.md).
+
 Idempotent Python tooling for Appwrite **SDK 24+** / Cloud 1.8+ (`TablesDB`).
 
 ## Prerequisites

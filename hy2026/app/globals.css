@@ -146,15 +146,19 @@
     }
 }
 
-/* Soft AI glitter rim for search — subtle shimmer, respects reduced motion */
+/* Soft AI glitter / magic — warm amber shimmer, respects reduced motion */
 @layer components {
-  .ai-glitter-shell {
+  .ai-glitter-shell,
+  .ai-magic-btn,
+  .ai-magic-badge {
     --ai-glitter-a: oklch(0.72 0.14 50 / 0.22);
     --ai-glitter-b: oklch(0.9 0.06 85 / 0.45);
     --ai-glitter-c: oklch(0.78 0.1 40 / 0.28);
   }
 
-  .dark .ai-glitter-shell {
+  .dark .ai-glitter-shell,
+  .dark .ai-magic-btn,
+  .dark .ai-magic-badge {
     --ai-glitter-a: oklch(0.78 0.14 50 / 0.35);
     --ai-glitter-b: oklch(0.88 0.08 80 / 0.4);
     --ai-glitter-c: oklch(0.7 0.1 45 / 0.3);
@@ -214,6 +218,112 @@
     opacity: 0.7;
   }
 
+  /* Generate / match CTA — magic only while busy */
+  .ai-magic-btn {
+    isolation: isolate;
+  }
+
+  .ai-magic-btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      105deg,
+      transparent 0%,
+      transparent 38%,
+      oklch(0.98 0.04 85 / 0.28) 50%,
+      transparent 62%,
+      transparent 100%
+    );
+    background-size: 220% 100%;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .ai-magic-btn::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: linear-gradient(
+      120deg,
+      var(--ai-glitter-a),
+      var(--ai-glitter-b),
+      var(--ai-glitter-c),
+      var(--ai-glitter-b),
+      var(--ai-glitter-a)
+    );
+    background-size: 240% 240%;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+    z-index: 0;
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  .ai-magic-btn--busy {
+    box-shadow:
+      0 0 0 1px oklch(0.72 0.12 50 / 0.2),
+      0 0 18px -4px oklch(0.7 0.12 50 / 0.35);
+  }
+
+  .ai-magic-btn--busy::before {
+    opacity: 1;
+    animation: ai-magic-sweep 1.6s ease-in-out infinite;
+  }
+
+  .ai-magic-btn--busy::after {
+    opacity: 0.9;
+    animation: ai-glitter-shift 2.8s ease-in-out infinite;
+  }
+
+  /* Badge spark — idle tickle, stronger when busy */
+  .ai-magic-badge__spark {
+    display: inline-block;
+    transform-origin: center;
+    animation: ai-spark-idle 3.2s ease-in-out infinite;
+  }
+
+  .ai-magic-badge--busy {
+    box-shadow: 0 0 12px -3px oklch(0.72 0.14 50 / 0.45);
+  }
+
+  .ai-magic-badge--busy .ai-magic-badge__spark {
+    animation: ai-spark-busy 0.9s ease-in-out infinite;
+  }
+
+  /* Soft surface while AI content loads */
+  .ai-magic-surface--busy {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ai-magic-surface--busy::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      oklch(0.9 0.05 70 / 0.12) 50%,
+      transparent 70%
+    );
+    background-size: 200% 100%;
+    animation: ai-magic-sweep 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+
   @keyframes ai-glitter-shift {
     0%,
     100% {
@@ -239,18 +349,62 @@
     }
   }
 
+  @keyframes ai-magic-sweep {
+    0% {
+      background-position: 120% 0;
+    }
+    100% {
+      background-position: -40% 0;
+    }
+  }
+
+  @keyframes ai-spark-idle {
+    0%,
+    100% {
+      opacity: 0.75;
+      transform: scale(1) rotate(0deg);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.08) rotate(8deg);
+    }
+  }
+
+  @keyframes ai-spark-busy {
+    0%,
+    100% {
+      opacity: 0.85;
+      transform: scale(1) rotate(-6deg);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.2) rotate(12deg);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .ai-glitter-shell::before,
-    .ai-glitter-shell::after {
+    .ai-glitter-shell::after,
+    .ai-magic-btn--busy::before,
+    .ai-magic-btn--busy::after,
+    .ai-magic-badge__spark,
+    .ai-magic-surface--busy::after {
       animation: none;
     }
 
-    .ai-glitter-shell::after {
+    .ai-glitter-shell::after,
+    .ai-magic-btn--busy::before,
+    .ai-magic-surface--busy::after {
       opacity: 0;
     }
 
-    .ai-glitter-shell--active::before {
+    .ai-glitter-shell--active::before,
+    .ai-magic-btn--busy::after {
       opacity: 0.7;
+    }
+
+    .ai-magic-btn--busy {
+      box-shadow: 0 0 0 1px oklch(0.72 0.12 50 / 0.25);
     }
   }
 }
