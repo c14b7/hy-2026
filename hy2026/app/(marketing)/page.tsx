@@ -53,11 +53,10 @@ export default function HomePage() {
           )}
         >
           <h1 className="font-heading text-2xl font-medium leading-snug tracking-tight text-white/95 text-balance md:text-3xl md:leading-snug">
-            Most między potrzebą a rozwiązaniem w Małopolsce
+            Most między potrzebą a rozwiązaniem. 
           </h1>
           <p className="max-w-md text-base font-medium leading-relaxed text-white/75 md:text-lg">
-            Opisz problem własnymi słowami i znajdź innowacje społeczne — albo pracuj w panelu
-            organizacji Hubu.
+            Opisz problem własnymi słowami i znajdź odpowiednie rozwiązania -  Most to platforma, która łączy mieszkańców z organizacjami i instytucjami w Małopolsce.
           </p>
         </div>
 

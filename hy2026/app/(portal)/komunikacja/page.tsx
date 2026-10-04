@@ -8,15 +8,9 @@ export const metadata = { title: "Komunikacja" }
 
 export default function KomunikacjaPage() {
   return (
-    <div className="mx-auto max-w-6xl space-y-4">
-      <div>
-        <h1 className="font-heading text-3xl font-medium">Komunikacja</h1>
-        <p className="text-muted-foreground">
-          Dialog z ROPS, mentorami i organizacjami — szybkie pytania i partnerstwa.
-        </p>
-      </div>
+    <div className="space-y-4">
       <GuestAuthPrompt action="rozmów z Hubem" />
-      <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+      <Suspense fallback={<Skeleton className="h-72 w-full rounded-2xl" />}>
         <CommunicationInbox />
       </Suspense>
     </div>

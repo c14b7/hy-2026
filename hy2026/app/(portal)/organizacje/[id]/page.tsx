@@ -19,7 +19,7 @@ export default async function OrganizationDetailPage({
   const inns = (await services.innovations.list()).filter((i) => i.orgId === org.id)
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
+    <div className="mx-auto max-w-6xl space-y-8">
       <header className="space-y-3">
         <Badge variant="secondary">{org.type}</Badge>
         <h1 className="font-heading text-3xl font-medium">{org.name}</h1>

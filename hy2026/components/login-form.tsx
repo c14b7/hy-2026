@@ -91,7 +91,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
                     <Input
                       id="email-portal"
                       type="email"
-                      defaultValue="anna@example.com"
+                      defaultValue="anna.kowalska@poczta.demo.pl"
                       readOnly
                     />
                   </Field>
@@ -123,7 +123,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
                     <Input
                       id="email-panel"
                       type="email"
-                      defaultValue="demo@most.malopolska.pl"
+                      defaultValue="marek.nowak@fundacja-most.pl"
                       readOnly
                     />
                   </Field>

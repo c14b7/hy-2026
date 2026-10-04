@@ -3,15 +3,12 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
-import { useRole } from "@/components/shared/role-provider"
+import { ROLE_LABELS, useRole } from "@/components/shared/role-provider"
+import { PageHeader } from "@/components/shared/page-header"
 import { Badge } from "@/components/ui/badge"
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { buttonVariants } from "@/components/ui/button"
 import { getServices } from "@/lib/services"
+import { cn } from "cn"
 
 export default function PanelDashboardPage() {
   const { role, user, canAccessPanel } = useRole()
@@ -20,7 +17,7 @@ export default function PanelDashboardPage() {
   useEffect(() => {
     if (!canAccessPanel) return
     Promise.all([
-      getServices().innovations.list(),
+      getServices().innovations.list({ includeUnpublished: role === "admin" }),
       getServices().needs.list(),
       getServices().communication.listThreads(),
       getServices().ideas.list(),
@@ -32,71 +29,65 @@ export default function PanelDashboardPage() {
         ideas: ideas.filter((i) => i.status === "pending").length,
       })
     })
-  }, [canAccessPanel])
+  }, [canAccessPanel, role])
 
   if (!canAccessPanel) {
     return (
-      <p>
-        Wybierz rolę Organizacja / JST / Ekspert / Admin w przełączniku po lewej, aby zobaczyć
-        panel.
+      <p className="text-muted-foreground">
+        Wybierz rolę Organizacja / JST / Ekspert / Admin, aby zobaczyć panel.
       </p>
     )
   }
 
+  const tiles = [
+    { label: "Innowacje", value: stats.inns, href: "/panel/innowacje" },
+    { label: "Potrzeby do moderacji", value: stats.needs, href: "/panel/zgloszenia" },
+    { label: "Nieprzeczytane wątki", value: stats.threads, href: "/panel/komunikacja" },
+    { label: "Pomysły do przeglądu", value: stats.ideas, href: "/panel/zgloszenia" },
+  ]
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-3xl font-medium">Pulpit</h1>
-        <p className="text-muted-foreground">
-          Witaj, {user?.displayName ?? "użytkowniku"}{" "}
-          <Badge variant="secondary">{role}</Badge>
-        </p>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>{stats.inns}</CardTitle>
-            <CardDescription>Innowacje w katalogu</CardDescription>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>{stats.needs}</CardTitle>
-            <CardDescription>Potrzeby do moderacji</CardDescription>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>{stats.ideas}</CardTitle>
-            <CardDescription>Fiszki oczekujące</CardDescription>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>{stats.threads}</CardTitle>
-            <CardDescription>Nowe wątki (admin)</CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-      <ul className="space-y-2 text-sm">
-        <li>
-          <Link href="/panel/zgloszenia" className="text-primary hover:underline">
-            Moderuj zgłoszenia →
+    <div className="mx-auto max-w-5xl space-y-8">
+      <PageHeader
+        eyebrow="Panel organizacji"
+        title="Pulpit"
+        description={`Witaj, ${user?.displayName ?? "użytkowniku"} — skrót pracy w Hubie MOST.`}
+        actions={<Badge variant="secondary">{ROLE_LABELS[role]}</Badge>}
+      />
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {tiles.map((t) => (
+          <Link
+            key={t.label}
+            href={t.href}
+            className="rounded-2xl bg-card p-5 shadow-sm ring-1 ring-foreground/6 transition-shadow hover:shadow-md"
+          >
+            <p className="font-heading text-3xl font-black tracking-tight text-primary">{t.value}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{t.label}</p>
           </Link>
-        </li>
-        <li>
-          <Link href="/panel/komunikacja" className="text-primary hover:underline">
-            Otwórz komunikację →
-          </Link>
-        </li>
-        {role === "admin" ? (
+        ))}
+      </div>
+
+      <section className="space-y-3">
+        <h2 className="font-heading text-lg font-bold">Szybkie ścieżki</h2>
+        <ul className="flex flex-wrap gap-2">
           <li>
-            <Link href="/panel/admin/trendy" className="text-primary hover:underline">
-              Trendy potrzeb (AI) →
+            <Link href="/panel/nabor" className={cn(buttonVariants({ variant: "outline" }))}>
+              Nabory ROPS
             </Link>
           </li>
-        ) : null}
-      </ul>
+          <li>
+            <Link href="/panel/wiedza" className={cn(buttonVariants({ variant: "outline" }))}>
+              Wiedza organizacji
+            </Link>
+          </li>
+          <li>
+            <Link href="/portal" className={cn(buttonVariants({ variant: "ghost" }))}>
+              Portal mieszkańców
+            </Link>
+          </li>
+        </ul>
+      </section>
     </div>
   )
 }

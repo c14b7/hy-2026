@@ -1,8 +1,10 @@
 import Link from "next/link"
 
+import { ThemeControl } from "@/components/theme-control"
+
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className="relative flex min-h-svh flex-col">
       <header className="absolute inset-x-0 top-0 z-20">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5">
           <Link
@@ -22,6 +24,11 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       <main id="main" className="flex-1">
         {children}
       </main>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-end p-4 md:p-6">
+        <div className="pointer-events-auto rounded-full bg-black/25 p-0.5 backdrop-blur-sm">
+          <ThemeControl />
+        </div>
+      </div>
     </div>
   )
 }

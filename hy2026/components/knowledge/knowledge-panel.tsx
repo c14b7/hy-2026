@@ -25,7 +25,7 @@ import { cn } from "cn"
 const KIND_LABELS: Record<KnowledgeKind, string> = {
   edu: "Edukacja",
   report: "Raport",
-  canvas: "Canva",
+  canvas: "Kanwa",
   video: "Film",
 }
 
@@ -78,8 +78,8 @@ export function KnowledgePanel() {
         <div className="space-y-1">
           <h1 className="font-heading text-2xl font-medium">Wiki / wiedza organizacji</h1>
           <p className="max-w-xl text-sm text-muted-foreground">
-            Wewnętrzna baza wiedzy Hubu — karty wpisów, Markdown, linki. Zmiany zapisują się w
-            warstwie mock (gotowe pod Appwrite).
+            Wewnętrzna baza wiedzy Hubu — karty wpisów, edytor treści, linki. Zmiany zapisują się w
+            Hubie (Appwrite / mock — patrz znacznik w stopce).
           </p>
         </div>
         <Link href="/panel/wiedza/nowy" className={cn(buttonVariants())}>

@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState } from "react"
 
 import { AiBadge } from "@/components/ai/ai-badge"
@@ -57,18 +58,18 @@ export function IdeaAssistant({
         Odśwież sugestie
       </Button>
       <div className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
-        Canwy Hubu:{" "}
-        <a href="/wiedza/canva-innowacji" className="underline">
+        Kanwy Hubu:{" "}
+        <Link href="/wiedza/kanwa-innowacji" className="underline">
           innowacji
-        </a>
+        </Link>
         ,{" "}
-        <a href="/wiedza/canva-interesariuszy" className="underline">
+        <Link href="/wiedza/kanwa-interesariuszy" className="underline">
           interesariuszy
-        </a>
+        </Link>
         ,{" "}
-        <a href="/wiedza/canva-testu" className="underline">
+        <Link href="/wiedza/kanwa-testu" className="underline">
           testu
-        </a>
+        </Link>
         .
       </div>
     </aside>

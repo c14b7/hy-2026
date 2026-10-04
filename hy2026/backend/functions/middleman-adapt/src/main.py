@@ -1,19 +1,42 @@
+# Appwrite Function: middleman-adapt (TablesDB)
+
 from appwrite.client import Client
-from appwrite.services.databases import Databases
+from appwrite.services.tables_db import TablesDB
 from appwrite.id import ID
 import json
 import os
 
 
+def _as_dict(doc):
+    if isinstance(doc, dict):
+        if "data" in doc and isinstance(doc["data"], dict) and "title" not in doc:
+            base = dict(doc["data"])
+            base["$id"] = doc.get("$id") or doc.get("id")
+            return base
+        return doc
+    data = getattr(doc, "data", None)
+    out = dict(data) if isinstance(data, dict) else {}
+    out["$id"] = getattr(doc, "id", None) or getattr(doc, "$id", None)
+    return out
+
+
+def _get(doc, key, default=None):
+    return _as_dict(doc).get(key, default)
+
+
 def main(context):
     """
     Body: { "innovationId": str, "institutionBrief": str, "authorId"?: str }
-    Creates a service_adaptations document (rule-based stub; swap for LLM later).
+    Creates a service_adaptations row (rule-based stub; swap for LLM later).
     """
-    try:
-        body = json.loads(context.req.body or "{}")
-    except json.JSONDecodeError:
-        return context.res.json({"error": "Invalid JSON"}, 400)
+    raw = context.req.body
+    if isinstance(raw, dict):
+        body = raw
+    else:
+        try:
+            body = json.loads(raw or "{}")
+        except json.JSONDecodeError:
+            return context.res.json({"error": "Invalid JSON"}, 400)
 
     innovation_id = body.get("innovationId")
     brief = (body.get("institutionBrief") or "").strip()
@@ -26,15 +49,15 @@ def main(context):
         .set_project(os.environ["APPWRITE_PROJECT_ID"])
         .set_key(os.environ.get("APPWRITE_API_KEY", ""))
     )
-    db = Databases(client)
+    db = TablesDB(client)
     database_id = os.environ.get("APPWRITE_DATABASE_ID", "most")
 
-    inn = db.get_document(
+    inn = db.get_row(
         database_id=database_id,
-        collection_id="innovations",
-        document_id=innovation_id,
+        table_id="innovations",
+        row_id=innovation_id,
     )
-    title = getattr(inn, "title", None) or (inn.get("title") if isinstance(inn, dict) else "innowacja")
+    title = _get(inn, "title") or "innowacja"
 
     data = {
         "innovationId": innovation_id,
@@ -57,14 +80,13 @@ def main(context):
             "Niedopasowanie kadrowe — zawęź zakres pilotażu",
         ],
         "summary": f"Propozycja wdrożenia „{title}” jako usługi publicznej (stub AI).",
-        "authorId": body.get("authorId"),
+        "authorId": body.get("authorId") or "",
     }
 
-    doc = db.create_document(
+    row = db.create_row(
         database_id=database_id,
-        collection_id="service_adaptations",
-        document_id=ID.unique(),
+        table_id="service_adaptations",
+        row_id=ID.unique(),
         data=data,
     )
-    doc_id = getattr(doc, "$id", None) or (doc.get("$id") if isinstance(doc, dict) else None)
-    return context.res.json({"id": doc_id, **data})
+    return context.res.json({"id": _get(row, "$id"), **data, "createdAt": _get(row, "$createdAt")})

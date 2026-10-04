@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 
 import { Badge } from "@/components/ui/badge"
+import { IDEA_STAGE_LABELS, STATUS_LABELS } from "@/lib/labels"
 import { getServices } from "@/lib/services"
 
 export default async function PomyslDetailPage({
@@ -13,10 +14,10 @@ export default async function PomyslDetailPage({
   if (!idea) notFound()
 
   return (
-    <article className="mx-auto max-w-3xl space-y-4 px-4 py-10">
+    <article className="mx-auto max-w-3xl space-y-4">
       <div className="flex flex-wrap gap-2">
-        <Badge variant="secondary">{idea.stage}</Badge>
-        <Badge variant="outline">{idea.status}</Badge>
+        <Badge variant="secondary">{IDEA_STAGE_LABELS[idea.stage]}</Badge>
+        <Badge variant="outline">{STATUS_LABELS[idea.status]}</Badge>
       </div>
       <h1 className="font-heading text-3xl font-medium">{idea.title}</h1>
       <p className="text-lg text-muted-foreground">{idea.essence}</p>

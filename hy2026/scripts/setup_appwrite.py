@@ -857,6 +857,7 @@ class Bootstrap:
                 ("APPWRITE_ENDPOINT", os.environ.get("APPWRITE_ENDPOINT", "")),
                 ("APPWRITE_PROJECT_ID", os.environ.get("APPWRITE_PROJECT_ID", "")),
                 ("APPWRITE_DATABASE_ID", self.database_id),
+                ("APPWRITE_API_KEY", os.environ.get("APPWRITE_API_KEY", "")),
             ]:
                 if not value or key in existing_keys:
                     continue
@@ -876,157 +877,74 @@ class Bootstrap:
         log("  Deploy stubs from backend/functions/*/ via Console or Appwrite CLI.")
 
     def seed(self) -> None:
-        log("[seed] demo rows (synthetic)")
+        """Upsert demo rows from data/mocks/appwrite-seed.json (export via npx tsx scripts/export-seed.ts)."""
+        seed_path = ROOT / "data" / "mocks" / "appwrite-seed.json"
+        if not seed_path.exists():
+            log(f"[seed] missing {seed_path.name} — run: npx tsx scripts/export-seed.ts")
+            sys.exit(1)
 
-        def row(table_id: str, row_id: str, data: dict[str, Any]) -> None:
-            ensure(
-                self.db.create_row,
-                database_id=self.database_id,
-                table_id=table_id,
-                row_id=row_id,
-                data=data,
-            )
+        payload = json.loads(seed_path.read_text(encoding="utf-8"))
+        log(f"[seed] upsert from {seed_path.relative_to(ROOT)}")
 
-        challenges = [
-            (
-                "ch-starzenie",
-                {
-                    "slug": "starzenie-sie-spoleczenstwa",
-                    "title": "Starzenie się społeczeństwa",
-                    "summary": "Nowe formy opieki i aktywizacji seniorów.",
-                    "metricsJson": json.dumps(
-                        [{"label": "Udział 65+", "value": "21%"}], ensure_ascii=False
-                    ),
-                    "relatedTags": ["seniorzy", "opieka", "aktywizacja"],
-                },
-            ),
-            (
-                "ch-samotnosc",
-                {
-                    "slug": "samotnosc",
-                    "title": "Samotność",
-                    "summary": "Izolacja społeczna seniorów i osób w kryzysie.",
-                    "metricsJson": json.dumps(
-                        [{"label": "Sieci lokalne", "value": "niedobór"}], ensure_ascii=False
-                    ),
-                    "relatedTags": ["samotnosc", "sasiedztwo", "wolontariat"],
-                },
-            ),
-            (
-                "ch-cyfrowe",
-                {
-                    "slug": "wykluczenie-cyfrowe",
-                    "title": "Wykluczenie cyfrowe",
-                    "summary": "Trudności z e-usługami wśród seniorów i mieszkańców wsi.",
-                    "metricsJson": json.dumps(
-                        [{"label": "Kompetencje 65+", "value": "niskie"}], ensure_ascii=False
-                    ),
-                    "relatedTags": ["wykluczenie-cyfrowe", "edukacja"],
-                },
-            ),
-        ]
-        for rid, data in challenges:
-            row("challenges", rid, data)
-
-        orgs = [
-            (
-                "org-rops",
-                {
-                    "name": "ROPS Kraków (demo)",
-                    "type": "rops",
-                    "location": "Kraków",
-                    "county": "Kraków",
-                    "description": "Koordynator Hubu — dane demonstracyjne.",
-                    "tags": ["hub", "koordynacja"],
-                    "contactEmail": "demo-hub@example.com",
-                    "logoInitials": "RK",
-                    "teamId": "team-rops-demo",
-                },
-            ),
-            (
-                "org-fundacja",
-                {
-                    "name": "Fundacja Most Pokoleń (demo)",
-                    "type": "ngo",
-                    "location": "Kraków",
-                    "county": "Kraków",
-                    "description": "Kluby sąsiedzkie i wolontariat międzypokoleniowy.",
-                    "tags": ["seniorzy", "samotnosc", "wolontariat"],
-                    "contactEmail": "demo-ngo@example.com",
-                    "logoInitials": "MP",
-                    "teamId": "team-fundacja-demo",
-                },
-            ),
-        ]
-        for rid, data in orgs:
-            row("organizations", rid, data)
-
-        innovations = [
-            (
-                "inn-1",
-                {
-                    "title": "Klub Sąsiedzki 60+",
-                    "summary": "Cotygodniowe spotkania seniorów z wolontariuszami.",
-                    "description": "Model klubu sąsiedzkiego — dane demonstracyjne.",
-                    "stage": "scaled",
-                    "orgId": "org-fundacja",
-                    "challengeIds": ["ch-starzenie", "ch-samotnosc"],
-                    "tags": ["seniorzy", "samotnosc", "wolontariat"],
-                    "location": "Kraków",
-                    "county": "Kraków",
-                    "testRecruiting": True,
-                    "status": "published",
-                    "beneficiaries": "Seniorzy 60+ mieszkający samodzielnie",
-                },
-            ),
-            (
-                "inn-2",
-                {
-                    "title": "Cyfrowy Asystent Gminny",
-                    "summary": "Punkty pomocy z e-usługami w bibliotekach.",
-                    "description": "Dyżury pomocy cyfrowej — dane demonstracyjne.",
-                    "stage": "pilot",
-                    "orgId": "org-fundacja",
-                    "challengeIds": ["ch-cyfrowe"],
-                    "tags": ["wykluczenie-cyfrowe", "edukacja"],
-                    "location": "Olkusz",
-                    "county": "olkuski",
-                    "testRecruiting": True,
-                    "status": "published",
-                    "beneficiaries": "Seniorzy i mieszkańcy wsi",
-                },
-            ),
-        ]
-        for rid, data in innovations:
-            row("innovations", rid, data)
-
-        row(
-            "knowledge",
-            "know-canva",
-            {
-                "slug": "canva-innowacji",
-                "title": "Canva innowacji społecznych",
-                "kind": "canvas",
-                "summary": "Szablon do prototypowania innowacji.",
-                "body": "## Cel\n\nOpisz problem, odbiorców i pierwszy test.\n\n- Problem\n- Dla kogo\n- Rozwiązanie",
-                "challengeIds": [],
-                "tags": ["canva", "prototypowanie"],
-                "readingMinutes": 5,
-                "status": "published",
-                "attachmentFileIds": [],
-            },
-        )
-        row(
+        # Order respects relationships (orgs before innovations, threads before messages, …)
+        table_order = [
+            "profiles",
+            "organizations",
+            "challenges",
+            "innovations",
+            "needs",
+            "ideas",
             "grant_calls",
-            "grant-1",
-            {
-                "title": "Nabór mikrograntów sąsiedzkich 2026 (demo)",
-                "summary": "Do 5 000 zł na lokalne mikroinnowacje.",
-                "opensAt": "2026-03-01T00:00:00.000+00:00",
-                "closesAt": "2026-04-15T23:59:59.000+00:00",
-                "active": True,
-            },
-        )
+            "knowledge",
+            "test_signups",
+            "threads",
+            "messages",
+            "beneficiaries",
+            "staff_members",
+        ]
+
+        def upsert(table_id: str, row_id: str, data: dict[str, Any]) -> None:
+            # Drop empty optional strings that break enum/relationship columns
+            cleaned = {k: v for k, v in data.items() if v != "" and v is not None}
+            try:
+                self.db.upsert_row(
+                    database_id=self.database_id,
+                    table_id=table_id,
+                    row_id=row_id,
+                    data=cleaned,
+                )
+            except AppwriteException as e:
+                log(f"  ! {table_id}/{row_id}: {e.message}")
+
+        for table_id in table_order:
+            rows = payload.get(table_id) or []
+            if not rows:
+                continue
+            log(f"  {table_id}: {len(rows)}")
+            for item in rows:
+                row_id = item.get("id") or item.get("$id")
+                if not row_id:
+                    continue
+                data = {k: v for k, v in item.items() if k not in ("id", "$id")}
+                # Optional empty relatedType/relatedId — omit rather than invalid enum
+                if table_id == "threads":
+                    if not data.get("relatedType"):
+                        data.pop("relatedType", None)
+                        data.pop("relatedId", None)
+                if table_id == "innovations":
+                    media_url = str(data.get("mediaUrl") or "")
+                    if not data.get("mediaType") or not media_url.startswith(
+                        ("http://", "https://")
+                    ):
+                        data.pop("mediaType", None)
+                        data.pop("mediaUrl", None)
+                        data.pop("mediaLabel", None)
+                        data.pop("mediaFileId", None)
+                if table_id == "test_signups":
+                    if not data.get("rating"):
+                        data.pop("rating", None)
+                upsert(table_id, row_id, data)
+
         log("[seed] done")
 
     def run(self, with_seed: bool = False) -> None:

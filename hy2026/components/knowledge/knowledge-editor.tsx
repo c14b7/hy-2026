@@ -3,24 +3,19 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
-import { Bold, Eye, Heading2, Italic, Link2, List, ListOrdered } from "lucide-react"
 
+import { RichBodyEditor } from "@/components/knowledge/rich-body-editor"
 import { MarkdownView } from "@/components/knowledge/markdown-view"
+import { PageHeader } from "@/components/shared/page-header"
 import { Button } from "@/components/ui/button"
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { toEditorHtml } from "@/lib/content-html"
+import { KNOWLEDGE_KIND_LABELS } from "@/lib/labels"
 import { getServices } from "@/lib/services"
 import type { KnowledgeArticle, KnowledgeKind, PublishStatus } from "@/types/domain"
-
-const KIND_LABELS: Record<KnowledgeKind, string> = {
-  edu: "Edukacja",
-  report: "Raport",
-  canvas: "Canva",
-  video: "Film / media",
-}
 
 type FormState = {
   title: string
@@ -39,11 +34,18 @@ function toForm(article?: KnowledgeArticle | null): FormState {
     slug: article?.slug ?? "",
     kind: article?.kind ?? "edu",
     summary: article?.summary ?? "",
-    body: article?.body ?? "",
+    body: toEditorHtml(article?.body ?? ""),
     tags: article?.tags.join(", ") ?? "",
     status: article?.status ?? "draft",
     externalUrl: "",
   }
+}
+
+function plainTextFromHtml(html: string) {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
 }
 
 export function KnowledgeEditor({
@@ -58,54 +60,11 @@ export function KnowledgeEditor({
   const [tab, setTab] = useState<"write" | "preview">("write")
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [textareaEl, setTextareaEl] = useState<HTMLTextAreaElement | null>(null)
 
-  const previewBody = useMemo(() => {
-    let body = form.body
-    if (form.externalUrl.trim()) {
-      body += `\n\n**Powiązany link:** [${form.externalUrl.trim()}](${form.externalUrl.trim()})`
-    }
-    return body
-  }, [form.body, form.externalUrl])
+  const initialHtml = useMemo(() => toEditorHtml(article?.body ?? ""), [article?.id, article?.body])
 
   function patch<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
-  }
-
-  function wrapSelection(before: string, after = before) {
-    const el = textareaEl
-    if (!el) {
-      patch("body", `${form.body}${before}${after}`)
-      return
-    }
-    const start = el.selectionStart
-    const end = el.selectionEnd
-    const selected = form.body.slice(start, end) || "tekst"
-    const next =
-      form.body.slice(0, start) + before + selected + after + form.body.slice(end)
-    patch("body", next)
-    requestAnimationFrame(() => {
-      el.focus()
-      const pos = start + before.length + selected.length + after.length
-      el.setSelectionRange(pos, pos)
-    })
-  }
-
-  function insertLine(prefix: string) {
-    const el = textareaEl
-    if (!el) {
-      patch("body", `${form.body}\n${prefix}`)
-      return
-    }
-    const start = el.selectionStart
-    const lineStart = form.body.lastIndexOf("\n", start - 1) + 1
-    const next = form.body.slice(0, lineStart) + prefix + form.body.slice(lineStart)
-    patch("body", next)
-  }
-
-  function insertLink() {
-    const url = form.externalUrl.trim() || "https://example.com"
-    wrapSelection("[", `](${url})`)
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -114,8 +73,9 @@ export function KnowledgeEditor({
       setError("Podaj tytuł wpisu.")
       return
     }
-    if (!form.body.trim()) {
-      setError("Treść nie może być pusta — możesz użyć Markdown.")
+    const text = plainTextFromHtml(form.body)
+    if (!text) {
+      setError("Treść nie może być pusta.")
       return
     }
     setSaving(true)
@@ -123,7 +83,7 @@ export function KnowledgeEditor({
     try {
       let body = form.body.trim()
       if (form.externalUrl.trim() && !body.includes(form.externalUrl.trim())) {
-        body += `\n\n**Powiązany link:** [${form.title.trim() || "Źródło"}](${form.externalUrl.trim()})`
+        body += `<p><strong>Powiązany link:</strong> <a href="${form.externalUrl.trim()}">${form.title.trim() || "Źródło"}</a></p>`
       }
       const tags = form.tags
         .split(",")
@@ -133,7 +93,7 @@ export function KnowledgeEditor({
         title: form.title.trim(),
         slug: form.slug.trim(),
         kind: form.kind,
-        summary: form.summary.trim() || form.body.trim().slice(0, 140),
+        summary: form.summary.trim() || text.slice(0, 140),
         body,
         tags,
         challengeIds: article?.challengeIds ?? [],
@@ -157,20 +117,17 @@ export function KnowledgeEditor({
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-heading text-2xl font-medium">
-            {mode === "create" ? "Nowy wpis wiki" : "Edycja wpisu"}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Markdown: nagłówki, listy, **pogrubienie**, linki `[tekst](url)`.
-          </p>
-        </div>
-        <Link href="/panel/wiedza" className="text-sm text-muted-foreground hover:underline">
-          ← Lista wpisów
-        </Link>
-      </div>
+    <form onSubmit={onSubmit} className="mx-auto max-w-4xl space-y-6">
+      <PageHeader
+        eyebrow="Wiedza organizacji"
+        title={mode === "create" ? "Nowy wpis wiki" : "Edycja wpisu"}
+        description="Edytor wizualny z formatowaniem, listami, tabelami i linkami — jak w nowoczesnych narzędziach Hubu."
+        actions={
+          <Link href="/panel/wiedza" className="text-sm text-muted-foreground hover:underline">
+            ← Lista wpisów
+          </Link>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-2">
         <Field>
@@ -198,9 +155,9 @@ export function KnowledgeEditor({
             value={form.kind}
             onChange={(e) => patch("kind", e.target.value as KnowledgeKind)}
           >
-            {(Object.keys(KIND_LABELS) as KnowledgeKind[]).map((k) => (
+            {(Object.keys(KNOWLEDGE_KIND_LABELS) as KnowledgeKind[]).map((k) => (
               <option key={k} value={k}>
-                {KIND_LABELS[k]}
+                {KNOWLEDGE_KIND_LABELS[k]}
               </option>
             ))}
           </Select>
@@ -236,7 +193,7 @@ export function KnowledgeEditor({
           id="tags"
           value={form.tags}
           onChange={(e) => patch("tags", e.target.value)}
-          placeholder="np. seniorzy, canva, wdrozenie"
+          placeholder="np. seniorzy, kanwa, wdrozenie"
         />
       </Field>
 
@@ -250,60 +207,34 @@ export function KnowledgeEditor({
           placeholder="https://…"
         />
         <FieldDescription>
-          Możesz wstawić go do treści przyciskiem „Link” albo zostanie dopisany przy zapisie.
+          Możesz też wstawić link w treści przez menu bąbelkowe (Link).
         </FieldDescription>
       </Field>
 
       <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-1">
-          <Button type="button" size="xs" variant="outline" onClick={() => wrapSelection("**")}>
-            <Bold className="size-3.5" />
-          </Button>
-          <Button type="button" size="xs" variant="outline" onClick={() => wrapSelection("*")}>
-            <Italic className="size-3.5" />
-          </Button>
-          <Button type="button" size="xs" variant="outline" onClick={() => insertLine("## ")}>
-            <Heading2 className="size-3.5" />
-          </Button>
-          <Button type="button" size="xs" variant="outline" onClick={() => insertLine("- ")}>
-            <List className="size-3.5" />
-          </Button>
-          <Button type="button" size="xs" variant="outline" onClick={() => insertLine("1. ")}>
-            <ListOrdered className="size-3.5" />
-          </Button>
-          <Button type="button" size="xs" variant="outline" onClick={insertLink}>
-            <Link2 className="size-3.5" />
-            Link
-          </Button>
-        </div>
-
+        <FieldLabel>Treść</FieldLabel>
         <Tabs>
           <TabsList>
             <TabsTrigger active={tab === "write"} onClick={() => setTab("write")}>
-              Markdown
+              Edytor
             </TabsTrigger>
             <TabsTrigger active={tab === "preview"} onClick={() => setTab("preview")}>
-              <Eye className="mr-1 size-3.5" />
               Podgląd
             </TabsTrigger>
           </TabsList>
           {tab === "write" ? (
             <TabsContent>
-              <Textarea
-                ref={setTextareaEl}
-                id="body"
-                value={form.body}
-                onChange={(e) => patch("body", e.target.value)}
-                className="min-h-64 font-mono text-sm"
-                placeholder={`## Nagłówek\n\nTreść z **Markdown** i [linkiem](https://example.com).\n\n- punkt 1\n- punkt 2`}
-                aria-label="Treść Markdown"
+              <RichBodyEditor
+                editorKey={article?.id ?? "new"}
+                initialHtml={initialHtml}
+                onHtmlChange={(html) => patch("body", html)}
               />
             </TabsContent>
           ) : (
             <TabsContent>
-              <div className="min-h-64 rounded-2xl border border-border bg-card p-4">
-                {previewBody.trim() ? (
-                  <MarkdownView content={previewBody} />
+              <div className="min-h-72 rounded-2xl border border-border bg-card p-4 md:p-5">
+                {plainTextFromHtml(form.body) ? (
+                  <MarkdownView content={form.body} />
                 ) : (
                   <p className="text-sm text-muted-foreground">Brak treści do podglądu.</p>
                 )}
@@ -323,11 +254,7 @@ export function KnowledgeEditor({
         <Button type="submit" disabled={saving}>
           {saving ? "Zapisuję…" : mode === "create" ? "Utwórz wpis" : "Zapisz zmiany"}
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.push("/panel/wiedza")}
-        >
+        <Button type="button" variant="outline" onClick={() => router.push("/panel/wiedza")}>
           Anuluj
         </Button>
       </div>

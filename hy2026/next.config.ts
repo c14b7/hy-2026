@@ -26,8 +26,7 @@ function localDevOrigins(): string[] {
   for (const nets of Object.values(os.networkInterfaces())) {
     for (const net of nets ?? []) {
       if (net.internal) continue
-      const family = net.family
-      if (family === "IPv4" || family === 4) {
+      if (String(net.family) === "IPv4" || String(net.family) === "4") {
         fromNics.push(net.address)
       }
     }

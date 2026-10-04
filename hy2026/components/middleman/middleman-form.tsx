@@ -126,14 +126,19 @@ export function MiddlemanForm() {
           </div>
           <Button
             type="button"
-            onClick={() => setSaved(true)}
+            onClick={() => {
+              if (!result) return
+              const payload = { ...result, summary: editedSummary }
+              sessionStorage.setItem("most-middleman-draft", JSON.stringify(payload))
+              setSaved(true)
+            }}
             variant="outline"
           >
-            Zapisz lokalnie (demo)
+            Zapisz w przeglądarce
           </Button>
           {saved ? (
             <p role="status" className="text-sm text-primary">
-              Plan zapisany w sesji demo (bez backendu).
+              Plan zapisany w sesji przeglądarki (sessionStorage).
             </p>
           ) : null}
         </section>

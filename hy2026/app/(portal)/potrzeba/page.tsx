@@ -1,10 +1,10 @@
-import { MatchmakingForm } from "@/components/matchmaking/matchmaking-form"
+﻿import { MatchmakingForm } from "@/components/matchmaking/matchmaking-form"
 
 export const metadata = { title: "Opisz problem" }
 
 export default function PotrzebaPage() {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 md:py-14">
+    <div className="mx-auto max-w-6xl">
       <MatchmakingForm />
     </div>
   )

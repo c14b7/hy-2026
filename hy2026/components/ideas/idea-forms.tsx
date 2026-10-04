@@ -10,10 +10,9 @@ import { Field, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { challenges } from "@/data/mocks/seed"
 import { getServices } from "@/lib/services"
 import { useRole } from "@/components/shared/role-provider"
-import type { IdeaStage } from "@/types/domain"
+import type { ChallengeArea, IdeaStage } from "@/types/domain"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "cn"
 
@@ -25,9 +24,14 @@ export function IdeaCreateForm() {
   const [description, setDescription] = useState("")
   const [stage, setStage] = useState<IdeaStage>("concept")
   const [challengeId, setChallengeId] = useState("")
+  const [challenges, setChallenges] = useState<ChallengeArea[]>([])
   const [savedId, setSavedId] = useState<string | null>(null)
   const [assistantOpen, setAssistantOpen] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    getServices().challenges.list().then(setChallenges)
+  }, [])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()

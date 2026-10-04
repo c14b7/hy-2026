@@ -207,6 +207,8 @@ export interface InnovationFilters {
   tag?: string
   stage?: InnovationStage
   testRecruiting?: boolean
+  /** When true, include draft/pending (panel / admin). */
+  includeUnpublished?: boolean
 }
 
 export interface OrganizationFilters {

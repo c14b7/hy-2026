@@ -11,6 +11,9 @@ import {
 
 import type { User, UserRole } from "@/types/domain"
 import { users } from "@/data/mocks/seed"
+import { ROLE_LABELS } from "@/lib/labels"
+
+export { ROLE_LABELS }
 
 const STORAGE_KEY = "most-demo-role"
 
@@ -58,7 +61,13 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   )
 
   if (!ready) {
-    return <div className="min-h-svh bg-background" aria-hidden />
+    return (
+      <div className="flex min-h-svh items-center justify-center bg-background" aria-busy="true">
+        <p className="font-heading text-sm font-medium tracking-wide text-muted-foreground">
+          MOST
+        </p>
+      </div>
+    )
   }
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>
@@ -68,13 +77,4 @@ export function useRole() {
   const ctx = useContext(RoleContext)
   if (!ctx) throw new Error("useRole must be used within RoleProvider")
   return ctx
-}
-
-export const ROLE_LABELS: Record<UserRole, string> = {
-  guest: "Gość",
-  seeker: "Mieszkaniec",
-  org: "Organizacja",
-  jst: "JST",
-  expert: "Ekspert",
-  admin: "Admin ROPS",
 }

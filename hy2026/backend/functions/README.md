@@ -1,19 +1,26 @@
-# Appwrite Functions (stubs)
+# Appwrite Functions (MOST)
 
-These are placeholder Python handlers for MOST. The bootstrap script
-`scripts/setup_appwrite.py` registers the functions; deploy code via Console/CLI.
+Python 3.12 stubs using **TablesDB** (SDK 24+).
 
-| Folder | Function ID | Purpose |
-|--------|-------------|---------|
-| `match-need/` | `match-need` | Keyword matchmaking → `match_queries` |
-| `trend-clusters/` | `trend-clusters` | Aggregate needs into challenge clusters |
-| `middleman-adapt/` | `middleman-adapt` | Build service adaptation plan |
+| Function ID | Purpose |
+|-------------|---------|
+| `match-need` | Keyword match → innovations + row in `match_queries` |
+| `trend-clusters` | Aggregate needs by challenge |
+| `middleman-adapt` | Rule-based service adaptation → `service_adaptations` |
 
-Each function needs runtime env:
+## Env (set by `scripts/setup_appwrite.py`)
 
 - `APPWRITE_ENDPOINT`
 - `APPWRITE_PROJECT_ID`
-- `APPWRITE_API_KEY` (function-scoped or project key)
-- `APPWRITE_DATABASE_ID=most`
+- `APPWRITE_DATABASE_ID`
+- `APPWRITE_API_KEY`
 
-Entrypoint: `src/main.py` → `main(context)`.
+## Deploy
+
+```bash
+python scripts/deploy_functions.py
+```
+
+Or package each folder as `.tar.gz` and upload in Console → Functions → Deployments.
+
+Next.js calls these via `node-appwrite` `Functions.createExecution`; on failure it falls back to local keyword logic against live TablesDB rows.

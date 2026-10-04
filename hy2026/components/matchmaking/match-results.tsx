@@ -1,11 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useTransition } from "react"
 
 import { AiBadge } from "@/components/ai/ai-badge"
 import { MatchScore } from "@/components/ai/match-score"
 import { EmptyState } from "@/components/shared/empty-state"
+import { PageHeader } from "@/components/shared/page-header"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,9 +17,9 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { buttonVariants } from "@/components/ui/button"
 import { getServices } from "@/lib/services"
 import type { Innovation, MatchResult, NeedReport, Organization } from "@/types/domain"
-import { buttonVariants } from "@/components/ui/button"
 import { cn } from "cn"
 
 type Stored = MatchResult & { manual?: boolean }
@@ -31,6 +32,7 @@ export function MatchResults() {
   const [loading, setLoading] = useState(true)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [keywords, setKeywords] = useState<string[]>([])
+  const [pending, startTransition] = useTransition()
 
   useEffect(() => {
     const raw = sessionStorage.getItem("most-match-result")
@@ -54,7 +56,23 @@ export function MatchResults() {
   }, [])
 
   function toggleKeyword(kw: string) {
-    setKeywords((prev) => (prev.includes(kw) ? prev.filter((k) => k !== kw) : [...prev, kw]))
+    const next = keywords.includes(kw) ? keywords.filter((k) => k !== kw) : [...keywords, kw]
+    setKeywords(next)
+    if (!result) return
+    startTransition(async () => {
+      const refreshed = await getServices().ai.matchNeed(next.join(" ") || result.query, {
+        location: undefined,
+        challengeId: undefined,
+      })
+      const merged: Stored = {
+        ...refreshed,
+        query: result.query,
+        keywords: next,
+        manual: result.manual,
+      }
+      setResult(merged)
+      sessionStorage.setItem("most-match-result", JSON.stringify(merged))
+    })
   }
 
   if (loading) {
@@ -84,34 +102,35 @@ export function MatchResults() {
 
   return (
     <div className="space-y-8" aria-live="polite">
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="font-heading text-3xl font-medium">Wyniki dopasowania</h1>
-          <AiBadge>{result.manual ? "Słowa kluczowe" : "Dopasowanie AI"}</AiBadge>
-        </div>
-        <p className="max-w-3xl text-muted-foreground">
-          Na podstawie: „{result.query.slice(0, 160)}
-          {result.query.length > 160 ? "…" : ""}”
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Sugestia AI nie zastępuje Twojej decyzji. Możesz edytować tagi i przejść do katalogu.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Wynik"
+        title="Dopasowania"
+        description={`Na podstawie: „${result.query.slice(0, 160)}${result.query.length > 160 ? "…" : ""}”. Sugestia Hubu nie zastępuje Twojej decyzji.`}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <AiBadge>{result.manual ? "Katalog + tagi" : "Dopasowanie AI"}</AiBadge>
+            {pending ? <span className="text-xs text-muted-foreground">Aktualizuję…</span> : null}
+          </div>
+        }
+      />
 
       <div>
         <h2 className="mb-2 text-sm font-medium">Słowa kluczowe</h2>
         <div className="flex flex-wrap gap-2">
-          {keywords.map((kw) => (
-            <button
-              key={kw}
-              type="button"
-              onClick={() => toggleKeyword(kw)}
-              className="rounded-full focus-visible:ring-3 focus-visible:ring-ring/30"
-              aria-pressed={true}
-            >
-              <Badge variant="secondary">{kw} ×</Badge>
-            </button>
-          ))}
+          {keywords.map((kw) => {
+            const on = keywords.includes(kw)
+            return (
+              <button
+                key={kw}
+                type="button"
+                onClick={() => toggleKeyword(kw)}
+                className="rounded-full focus-visible:ring-3 focus-visible:ring-ring/30"
+                aria-pressed={on}
+              >
+                <Badge variant={on ? "secondary" : "outline"}>{kw} ×</Badge>
+              </button>
+            )
+          })}
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <Link
@@ -126,10 +145,10 @@ export function MatchResults() {
         </div>
       </div>
 
-      {result.manual || innItems.length === 0 ? (
+      {innItems.length === 0 ? (
         <EmptyState
-          title={result.manual ? "Tryb bez AI" : "Brak silnych dopasowań AI"}
-          description="Przejdź do katalogu innowacji i filtruj ręcznie — albo wróć i włącz dopasowanie AI."
+          title="Brak silnych dopasowań"
+          description="Spróbuj innych słów kluczowych albo przeglądaj katalog innowacji ręcznie."
           actionHref="/innowacje"
           actionLabel="Otwórz katalog"
         />
@@ -145,14 +164,18 @@ export function MatchResults() {
                   <CardHeader>
                     <div className="flex flex-wrap items-center gap-2">
                       <MatchScore score={item.score} />
-                      <AiBadge>Dlaczego pasuje</AiBadge>
+                      {!result.manual ? <AiBadge>Dlaczego pasuje</AiBadge> : null}
                     </div>
                     <CardTitle>
                       <Link href={`/innowacje/${inn.id}`} className="hover:underline">
                         {inn.title}
                       </Link>
                     </CardTitle>
-                    <CardDescription>{item.rationale}</CardDescription>
+                    <CardDescription>
+                      {result.manual
+                        ? `${inn.summary} · ${inn.location}`
+                        : item.rationale}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="flex flex-wrap gap-2">
                     <Link
@@ -179,7 +202,9 @@ export function MatchResults() {
                       type="button"
                       size="sm"
                       variant="ghost"
-                      onClick={() => setFeedback("Dziękujemy — zapiszemy sygnał do poprawy dopasowań.")}
+                      onClick={() =>
+                        setFeedback("Dziękujemy — sygnał pomoże dopracować dopasowania Hubu.")
+                      }
                     >
                       To nie to
                     </Button>
@@ -219,7 +244,8 @@ export function MatchResults() {
                     <MatchScore score={item.score} />
                     <CardTitle className="text-base">Podobne zgłoszenie</CardTitle>
                     <CardDescription>
-                      {need.body.slice(0, 140)}…
+                      {need.body.slice(0, 140)}
+                      {need.body.length > 140 ? "…" : ""}
                       <br />
                       <span className="mt-1 block text-xs">{item.rationale}</span>
                     </CardDescription>

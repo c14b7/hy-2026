@@ -2,27 +2,36 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { demoScenarios } from "@/lib/ai/match"
+import { normalizeCounty } from "@/lib/geo"
 import { getServices } from "@/lib/services"
+import { useRole } from "@/components/shared/role-provider"
 import { AiBadge } from "@/components/ai/ai-badge"
+import { PageHeader } from "@/components/shared/page-header"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { challenges } from "@/data/mocks/seed"
+import type { ChallengeArea } from "@/types/domain"
 
 export function MatchmakingForm() {
   const router = useRouter()
+  const { role, user } = useRole()
   const [query, setQuery] = useState("")
   const [location, setLocation] = useState("")
   const [challengeId, setChallengeId] = useState("")
+  const [challenges, setChallenges] = useState<ChallengeArea[]>([])
   const [useAi, setUseAi] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    getServices().challenges.list().then(setChallenges)
+  }, [])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -33,29 +42,43 @@ export function MatchmakingForm() {
     setError(null)
     setLoading(true)
     try {
+      const county = normalizeCounty(location)
+      const keywords = await getServices().ai.suggestKeywords(query)
+
+      // Persist anonymous need for Hub analytics / moderation (demo store).
+      await getServices().needs.create({
+        body: query.trim(),
+        location: location.trim() || undefined,
+        county,
+        challengeIds: challengeId ? [challengeId] : [],
+        tags: keywords.slice(0, 5),
+        authorRole: role,
+        authorName: user?.displayName ?? "Mieszkaniec (anonimowo)",
+      })
+
       if (useAi) {
         const result = await getServices().ai.matchNeed(query, {
-          location: location || undefined,
+          location: location || county || undefined,
           challengeId: challengeId || undefined,
         })
         sessionStorage.setItem("most-match-result", JSON.stringify(result))
       } else {
-        const keywords = await getServices().ai.suggestKeywords(query)
+        const result = await getServices().ai.matchNeed(query, {
+          location: location || county || undefined,
+          challengeId: challengeId || undefined,
+        })
         sessionStorage.setItem(
           "most-match-result",
           JSON.stringify({
-            id: "manual",
-            query,
+            ...result,
             keywords,
-            items: [],
-            createdAt: new Date().toISOString(),
             manual: true,
           })
         )
       }
       const params = new URLSearchParams()
-      if (!useAi && query) params.set("q", query)
-      if (location) params.set("county", location)
+      if (location) params.set("location", location)
+      if (county) params.set("county", county)
       if (challengeId) params.set("challengeId", challengeId)
       router.push(`/potrzeba/wynik?${params.toString()}`)
     } catch {
@@ -66,24 +89,29 @@ export function MatchmakingForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="mx-auto flex max-w-2xl flex-col gap-5">
-      <div className="space-y-2">
-        <h1 className="font-heading text-3xl font-medium tracking-tight">Opisz swój problem</h1>
-        <p className="text-muted-foreground">
-          Napisz własnymi słowami, z czym potrzebujesz pomocy. MOST zaproponuje innowacje i
-          organizacje — to sugestia, decyzja należy do Ciebie.
-        </p>
-        <AiBadge>Matchmaking społeczny</AiBadge>
-      </div>
+    <form onSubmit={onSubmit} className="mx-auto flex max-w-2xl flex-col gap-6">
+      <PageHeader
+        eyebrow="Matchmaking"
+        title="Opisz swój problem"
+        description="Napisz własnymi słowami, z czym potrzebujesz pomocy. MOST zaproponuje innowacje i organizacje — to sugestia, decyzja należy do Ciebie."
+        actions={<AiBadge>Asystent Hubu</AiBadge>}
+        className="border-0 pb-0"
+      />
 
-      <div className="flex flex-wrap gap-2" aria-label="Scenariusze demo">
+      <div className="flex flex-wrap gap-2" aria-label="Przykładowe sytuacje">
         {demoScenarios.map((s) => (
           <Button
             key={s.label}
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => setQuery(s.query)}
+            onClick={() => {
+              setQuery(s.query)
+              if (s.label.includes("senior")) setLocation("Limanowa")
+              if (s.label.includes("cyfrowe")) setLocation("Olkusz")
+              if (s.label.includes("młodzieży") || s.label.includes("Kryzys"))
+                setLocation("Nowy Sącz")
+            }}
           >
             {s.label}
           </Button>
@@ -103,18 +131,18 @@ export function MatchmakingForm() {
           aria-describedby="problem-hint"
         />
         <FieldDescription id="problem-hint">
-          Nie podawaj prawdziwych danych wrażliwych — to środowisko demonstracyjne.
+          Nie podawaj prawdziwych danych wrażliwych — to środowisko demonstracyjne Hubu.
         </FieldDescription>
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field>
-          <FieldLabel htmlFor="location">Lokalizacja (opcjonalnie)</FieldLabel>
+          <FieldLabel htmlFor="location">Miejscowość / powiat (opcjonalnie)</FieldLabel>
           <Input
             id="location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="np. Limanowa"
+            placeholder="np. Limanowa, Myślenice"
           />
         </Field>
         <Field>
@@ -140,10 +168,11 @@ export function MatchmakingForm() {
           onChange={(e) => setUseAi(e.target.checked)}
           aria-describedby="ai-hint"
         />
-        Użyj dopasowania AI
+        Podświetl dopasowania AI (możesz potem edytować tagi)
       </label>
       <p id="ai-hint" className="text-xs text-muted-foreground">
-        Możesz wyłączyć AI i przejść do ręcznego katalogu z wygenerowanymi słowami kluczowymi.
+        Wyłączenie AI nadal zapisuje zgłoszenie i pokazuje wyniki katalogowe — bez „czarnej skrzynki”
+        w uzasadnieniach.
       </p>
 
       {error ? (
@@ -156,8 +185,11 @@ export function MatchmakingForm() {
         <Button type="submit" size="lg" disabled={loading}>
           {loading ? "Szukam dopasowań…" : "Znajdź rozwiązania"}
         </Button>
-        <Link href="/innowacje" className="text-sm text-muted-foreground underline-offset-4 hover:underline self-center">
-          Albo przeglądaj katalog bez AI
+        <Link
+          href="/innowacje"
+          className="self-center text-sm text-muted-foreground underline-offset-4 hover:underline"
+        >
+          Albo przeglądaj katalog
         </Link>
       </div>
     </form>

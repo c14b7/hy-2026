@@ -20,7 +20,7 @@ export default async function WyzwanieDetailPage({
   )
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
+    <div className="mx-auto max-w-6xl space-y-8">
       <header className="max-w-3xl space-y-3">
         <h1 className="font-heading text-3xl font-medium">{challenge.title}</h1>
         <p className="text-muted-foreground">{challenge.summary}</p>

@@ -1,42 +1,50 @@
 # Appwrite bootstrap (MOST) — TablesDB
 
-Idempotent Python script for Appwrite **SDK 24+** / Cloud 1.8+ (`TablesDB`: tables, columns, rows).
+Idempotent Python tooling for Appwrite **SDK 24+** / Cloud 1.8+ (`TablesDB`).
 
 ## Prerequisites
 
-1. Create a project in [Appwrite Console](https://cloud.appwrite.io).
-2. Create an **API key** with these scopes (names may vary slightly in UI):
+1. Project in [Appwrite Console](https://cloud.appwrite.io).
+2. API key scopes:
    - `databases.read` / `databases.write`
-   - `tables.read` / `tables.write` (**required** — not only `collections.*`)
+   - `tables.read` / `tables.write` (**required**)
    - `columns.read` / `columns.write` (if shown)
    - `rows.read` / `rows.write` (for `--seed`)
    - `buckets.read` / `buckets.write`
    - `functions.read` / `functions.write`
-3. Copy env:
+3. Env:
 
 ```bash
 cp .env.appwrite.example .env.appwrite
-# fill APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY
+# APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY, APPWRITE_DATABASE_ID=most
 ```
 
-Endpoint example for Frankfurt: `https://fra.cloud.appwrite.io/v1`
+Frankfurt example: `https://fra.cloud.appwrite.io/v1`
 
-## Install
+## Install & run
 
 ```bash
 pip install -r scripts/requirements-appwrite.txt
-# or: pip install "appwrite>=24" python-dotenv
-```
-
-## Run
-
-```bash
+npx tsx scripts/export-seed.ts
 python scripts/setup_appwrite.py
 python scripts/setup_appwrite.py --seed
+python scripts/deploy_functions.py
+python scripts/smoke_appwrite.py
 ```
 
-If you see `401 ... missing scopes (["collections.write"])` you are on an old script or key — update the key with **tables.write** and re-run this TablesDB script.
+`--seed` upserts rows from `data/mocks/appwrite-seed.json` (exported from `data/mocks/seed.ts`).
 
-## Function stubs
+## Next.js wiring
 
-See `backend/functions/` — registered by the script; deploy code via Console/CLI.
+Copy the same endpoint/project/key into `.env.local` (see `.env.local.example`):
+
+- `NEXT_PUBLIC_APPWRITE_*` — public
+- `APPWRITE_API_KEY` — **server only**
+- `MOST_DATA_SOURCE=appwrite` + `NEXT_PUBLIC_MOST_DATA_SOURCE=appwrite`
+
+UI talks to TablesDB through Server Actions (`lib/services/actions.ts`). AI functions are called when ready; keyword fallback runs against live rows if execution fails.
+
+## Functions
+
+Registered + env vars (`APPWRITE_ENDPOINT`, `PROJECT_ID`, `DATABASE_ID`, `API_KEY`) by bootstrap.
+Deploy code with `scripts/deploy_functions.py` (tar.gz → `create_deployment`, activate=true).

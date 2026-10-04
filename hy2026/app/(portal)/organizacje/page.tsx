@@ -1,15 +1,15 @@
-import Link from "next/link"
+﻿import Link from "next/link"
 
-import { Badge } from "@/components/ui/badge"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { EmptyState } from "@/components/shared/empty-state"
+import { FilterBar } from "@/components/shared/filter-bar"
+import { PageHeader } from "@/components/shared/page-header"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
+import { ORG_TYPE_LABELS } from "@/lib/labels"
 import { getServices } from "@/lib/services"
+import { cn } from "cn"
 
 export const metadata = { title: "Organizacje" }
 
@@ -26,72 +26,67 @@ export default async function OrganizacjePage({
   })
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-10">
-      <div>
-        <h1 className="font-heading text-3xl font-medium">Organizacje</h1>
-        <p className="text-muted-foreground">
-          NGO, JST, CUS i partnerzy Hubu działający w Małopolsce.
-        </p>
-      </div>
-      <form className="flex flex-wrap gap-2">
-        <input
-          name="q"
-          defaultValue={sp.q}
-          placeholder="Szukaj…"
-          className="h-8 rounded-2xl border-transparent bg-input/50 px-3 text-sm"
-        />
-        <select
-          name="type"
-          defaultValue={sp.type ?? ""}
-          className="h-8 rounded-2xl bg-input/50 px-2 text-sm"
-        >
+    <div className="mx-auto max-w-6xl space-y-7">
+      <PageHeader
+        eyebrow="Sieć Hubu"
+        title="Organizacje"
+        description="NGO, JST, CUS i partnerzy działający w Małopolsce — od ROPS po lokalne stowarzyszenia."
+      />
+
+      <FilterBar className="sm:grid-cols-[1fr_10rem_auto]">
+        <Input name="q" defaultValue={sp.q} placeholder="Szukaj organizacji…" aria-label="Szukaj" />
+        <Select name="type" defaultValue={sp.type ?? ""} aria-label="Typ">
           <option value="">Wszystkie typy</option>
           <option value="ngo">NGO</option>
-          <option value="jst">JST</option>
+          <option value="jst">JST / CUS</option>
           <option value="rops">ROPS</option>
-          <option value="other">Inne</option>
-        </select>
-        <button type="submit" className="h-8 rounded-2xl bg-primary px-3 text-sm text-primary-foreground">
+          <option value="other">Partner</option>
+        </Select>
+        <Button type="submit" size="sm">
           Filtruj
-        </button>
-      </form>
+        </Button>
+      </FilterBar>
+
       {orgs.length === 0 ? (
         <EmptyState title="Brak organizacji" description="Zmień kryteria wyszukiwania." />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {orgs.map((org) => (
-            <Card key={org.id}>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div
-                    aria-hidden
-                    className="flex size-10 items-center justify-center rounded-2xl bg-primary/15 text-sm font-semibold text-primary"
-                  >
-                    {org.logoInitials}
-                  </div>
-                  <div>
-                    <CardTitle>
-                      <Link href={`/organizacje/${org.id}`} className="hover:underline">
-                        {org.name}
-                      </Link>
-                    </CardTitle>
-                    <CardDescription>
-                      {org.type.toUpperCase()} · {org.location}
-                    </CardDescription>
-                  </div>
+            <Link
+              key={org.id}
+              href={`/organizacje/${org.id}`}
+              className={cn(
+                "group flex h-full flex-col gap-4 rounded-2xl bg-card p-5 shadow-sm ring-1 ring-foreground/6",
+                "transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md"
+              )}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  aria-hidden
+                  className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-sm font-bold text-primary"
+                >
+                  {org.logoInitials}
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="text-sm text-muted-foreground line-clamp-3">{org.description}</p>
-                <div className="flex flex-wrap gap-1">
-                  {org.tags.slice(0, 3).map((t) => (
-                    <Badge key={t} variant="outline">
-                      {t}
-                    </Badge>
-                  ))}
+                <div className="min-w-0 space-y-1">
+                  <h2 className="font-heading text-base font-bold tracking-tight group-hover:text-primary">
+                    {org.name}
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    {ORG_TYPE_LABELS[org.type]} · {org.location}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+                {org.description}
+              </p>
+              <div className="mt-auto flex flex-wrap gap-1.5">
+                {org.tags.slice(0, 3).map((t) => (
+                  <Badge key={t} variant="outline">
+                    {t}
+                  </Badge>
+                ))}
+              </div>
+            </Link>
           ))}
         </div>
       )}

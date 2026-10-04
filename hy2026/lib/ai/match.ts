@@ -1,5 +1,16 @@
-import type { Innovation, MatchItem } from "@/types/domain"
-import { challenges, innovations, needs, organizations } from "@/data/mocks/seed"
+import type {
+  ChallengeArea,
+  Innovation,
+  MatchItem,
+  NeedReport,
+  Organization,
+} from "@/types/domain"
+import {
+  challenges as seedChallenges,
+  innovations as seedInnovations,
+  needs as seedNeeds,
+  organizations as seedOrganizations,
+} from "@/data/mocks/seed"
 
 const STOP = new Set([
   "i",
@@ -25,6 +36,20 @@ const STOP = new Set([
   "oraz",
 ])
 
+export type MatchCatalog = {
+  innovations: Innovation[]
+  organizations: Organization[]
+  needs: NeedReport[]
+  challenges: ChallengeArea[]
+}
+
+const defaultCatalog = (): MatchCatalog => ({
+  innovations: seedInnovations,
+  organizations: seedOrganizations,
+  needs: seedNeeds,
+  challenges: seedChallenges,
+})
+
 export function tokenize(text: string): string[] {
   return text
     .toLowerCase()
@@ -36,13 +61,13 @@ export function tokenize(text: string): string[] {
     .filter((t) => t.length > 2 && !STOP.has(t))
 }
 
-export function extractKeywords(query: string): string[] {
+export function extractKeywords(query: string, catalog: MatchCatalog = defaultCatalog()): string[] {
   const tokens = tokenize(query)
   const catalogTags = new Set(
     [
-      ...innovations.flatMap((i) => i.tags),
-      ...challenges.flatMap((c) => c.relatedTags),
-      ...organizations.flatMap((o) => o.tags),
+      ...catalog.innovations.flatMap((i) => i.tags),
+      ...catalog.challenges.flatMap((c) => c.relatedTags),
+      ...catalog.organizations.flatMap((o) => o.tags),
     ].map((t) => t.toLowerCase())
   )
 
@@ -61,20 +86,39 @@ export function extractKeywords(query: string): string[] {
   if (q.includes("transport") || q.includes("dojazd") || q.includes("autobus"))
     mapped.push("transport", "dostepnosc")
   if (q.includes("mieszka")) mapped.push("mieszkalnictwo")
-  if (q.includes("senior") || q.includes(" Babcia") || q.includes("mama ma"))
+  if (
+    q.includes("senior") ||
+    q.includes("babcia") ||
+    q.includes("dziadek") ||
+    q.includes("mama ma") ||
+    q.includes("tata ma")
+  )
     mapped.push("seniorzy")
+  if (q.includes("zatrudn") || q.includes("wtz") || q.includes("zaz") || q.includes("ekonomii społecznej"))
+    mapped.push("integracja", "zatrudnienie")
+  if (q.includes("piecz") || q.includes("adopc") || q.includes("usamodziel"))
+    mapped.push("mieszkalnictwo", "mlodziez")
 
   return [...new Set([...mapped, ...fromCatalog, ...tokens.slice(0, 6)])].slice(0, 10)
 }
 
-function scoreInnovation(inn: Innovation, keywords: string[], location?: string, challengeId?: string): number {
+function scoreInnovation(
+  inn: Innovation,
+  keywords: string[],
+  location?: string,
+  challengeId?: string
+): number {
   let score = 0
   const hay = `${inn.title} ${inn.summary} ${inn.description} ${inn.tags.join(" ")} ${inn.beneficiaries}`.toLowerCase()
   for (const kw of keywords) {
     if (hay.includes(kw.toLowerCase()) || inn.tags.some((t) => t.includes(kw))) score += 18
   }
   if (challengeId && inn.challengeIds.includes(challengeId)) score += 25
-  if (location && (inn.location.toLowerCase().includes(location.toLowerCase()) || inn.county.toLowerCase().includes(location.toLowerCase())))
+  if (
+    location &&
+    (inn.location.toLowerCase().includes(location.toLowerCase()) ||
+      inn.county.toLowerCase().includes(location.toLowerCase()))
+  )
     score += 12
   if (inn.testRecruiting) score += 3
   return Math.min(score, 98)
@@ -82,11 +126,13 @@ function scoreInnovation(inn: Innovation, keywords: string[], location?: string,
 
 export function buildMatchItems(
   query: string,
-  options?: { location?: string; challengeId?: string }
+  options?: { location?: string; challengeId?: string },
+  catalog: MatchCatalog = defaultCatalog()
 ): { keywords: string[]; items: MatchItem[] } {
-  const keywords = extractKeywords(query)
+  const keywords = extractKeywords(query, catalog)
   const loc = options?.location
   const challengeId = options?.challengeId
+  const { innovations, organizations, needs } = catalog
 
   const innItems: MatchItem[] = innovations
     .filter((i) => i.status === "published")
@@ -144,7 +190,6 @@ export function buildMatchItems(
     .sort((a, b) => b.score - a.score)
     .slice(0, 4)
 
-  // Ensure demo always has results for common scenarios
   const items = [...innItems, ...orgItems, ...needItems]
   if (items.length < 3) {
     const fallback = innovations.slice(0, 3).map((inn, idx) => ({
@@ -162,7 +207,8 @@ export function buildMatchItems(
 function buildRationale(title: string, keywords: string[], score: number, kind: string): string {
   const top = keywords.slice(0, 3).join(", ") || "opisany kontekst"
   if (score >= 70) return `Silne dopasowanie ${kind} „${title}” do słów kluczowych: ${top}.`
-  if (score >= 40) return `Częściowe dopasowanie ${kind} „${title}” — warto sprawdzić szczegóły i lokalizację.`
+  if (score >= 40)
+    return `Częściowe dopasowanie ${kind} „${title}” — warto sprawdzić szczegóły i lokalizację.`
   return `Może być pomocne: „${title}” pojawia się w powiązanych obszarach Hubu.`
 }
 
