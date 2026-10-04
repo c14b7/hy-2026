@@ -18,6 +18,10 @@ export const metadata: Metadata = {
   },
   description:
     "MOST łączy potrzeby mieszkańców z innowacjami społecznymi, organizacjami i wiedzą Hubu.",
+  icons: {
+    icon: [{ url: "/favicon.ico", sizes: "any" }],
+    shortcut: "/favicon.ico",
+  },
 }
 
 export default function RootLayout({

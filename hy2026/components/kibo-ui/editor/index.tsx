@@ -530,17 +530,17 @@ export const EditorProvider = ({
       codeBlock: false,
       bulletList: {
         HTMLAttributes: {
-          class: cn("list-outside list-disc pl-4"),
+          class: "most-ul",
         },
       },
       orderedList: {
         HTMLAttributes: {
-          class: cn("list-outside list-decimal pl-4"),
+          class: "most-ol",
         },
       },
       listItem: {
         HTMLAttributes: {
-          class: cn("leading-normal"),
+          class: "most-li",
         },
       },
       blockquote: {

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <div className="relative flex min-h-svh flex-col items-center justify-center bg-[radial-gradient(ellipse_at_top,_oklch(0.94_0.04_55),_oklch(0.97_0.01_75)_45%,_oklch(0.985_0.006_75))] p-6 md:p-10 dark:bg-[radial-gradient(ellipse_at_top,_oklch(0.28_0.04_50),_oklch(0.2_0.02_48)_50%,_oklch(0.18_0.015_50))]">
-      <div className="w-full max-w-sm md:max-w-4xl">
+      <div className="w-full max-w-sm md:max-w-md">
         <Suspense
           fallback={<Skeleton className="h-80 w-full rounded-[min(var(--radius-4xl),24px)]" />}
         >

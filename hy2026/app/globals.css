@@ -144,6 +144,61 @@
   .font-black {
     font-weight: 900;
     }
+
+  /* Native <select> listbox: keep option text readable in dark mode. */
+  select option {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+  }
+}
+
+/* TipTap / markdown lists — custom markers (Tailwind preflight clears list-style). */
+@layer components {
+  .most-editor .ProseMirror ul,
+  .most-editor .ProseMirror .most-ul,
+  .most-md ul {
+    list-style-type: disc;
+    list-style-position: outside;
+    padding-inline-start: 1.35rem;
+    margin-block: 0.5rem;
+  }
+
+  .most-editor .ProseMirror ol,
+  .most-editor .ProseMirror .most-ol,
+  .most-md ol {
+    list-style-type: decimal;
+    list-style-position: outside;
+    padding-inline-start: 1.35rem;
+    margin-block: 0.5rem;
+  }
+
+  .most-editor .ProseMirror ul ul,
+  .most-md ul ul {
+    list-style-type: circle;
+  }
+
+  .most-editor .ProseMirror ul ul ul,
+  .most-md ul ul ul {
+    list-style-type: square;
+  }
+
+  .most-editor .ProseMirror li,
+  .most-editor .ProseMirror .most-li,
+  .most-md li {
+    display: list-item;
+    margin-block: 0.2rem;
+    line-height: 1.45;
+  }
+
+  .most-editor .ProseMirror li > p,
+  .most-md li > p {
+    margin: 0;
+  }
+
+  .most-editor .ProseMirror li > p + p,
+  .most-md li > p + p {
+    margin-top: 0.35rem;
+  }
 }
 
 /* Soft AI glitter / magic — warm amber shimmer, respects reduced motion */
