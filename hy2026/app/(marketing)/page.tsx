@@ -23,6 +23,8 @@ export default function HomePage() {
   return (
     <section className="relative min-h-svh overflow-hidden text-white">
       <div className="pointer-events-none absolute inset-0" aria-hidden>
+        {/* Always-on CSS plane — WebGL shader is additive; if it fails, hero stays readable */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_60%_40%,#ff6a2a,transparent_55%),linear-gradient(135deg,#e8a86a,#ff5005_55%,#c43a08)]" />
         <HeroGradient />
       </div>
       {/* Soft left scrim — keeps type readable on the grainy plane */}

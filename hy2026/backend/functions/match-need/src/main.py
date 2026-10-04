@@ -62,12 +62,25 @@ def main(context):
     tokens = [t for t in re.split(r"\W+", query.lower()) if len(t) > 2][:12]
     keywords = list(dict.fromkeys(tokens))
     q = query.lower()
-    if "samot" in q or "sąsiad" in q or "sasied" in q:
+    q_ascii = (
+        q.replace("ą", "a")
+        .replace("ć", "c")
+        .replace("ę", "e")
+        .replace("ł", "l")
+        .replace("ń", "n")
+        .replace("ó", "o")
+        .replace("ś", "s")
+        .replace("ź", "z")
+        .replace("ż", "z")
+    )
+    if any(x in q_ascii for x in ("samot", "sasied", "sasiada", "klub")):
         keywords.extend(["samotnosc", "seniorzy", "wolontariat"])
-    if "senior" in q or "babcia" in q or "dziadek" in q:
+    if any(x in q_ascii for x in ("senior", "babcia", "dziadek", "mama", "tata")):
         keywords.append("seniorzy")
-    if "cyfr" in q or "e-recept" in q or "tablet" in q:
+    if any(x in q_ascii for x in ("cyfr", "e-recept", "tablet", "internet")):
         keywords.extend(["wykluczenie-cyfrowe", "edukacja"])
+    if any(x in q_ascii for x in ("psych", "lek", "depres", "kryzys", "mlodzie")):
+        keywords.extend(["zdrowie-psychiczne", "mlodziez"])
     keywords = list(dict.fromkeys(keywords))
 
     listing = db.list_rows(database_id=database_id, table_id="innovations")

@@ -61,7 +61,7 @@ export function KnowledgeEditor({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const initialHtml = useMemo(() => toEditorHtml(article?.body ?? ""), [article?.id, article?.body])
+  const initialHtml = useMemo(() => toEditorHtml(article?.body ?? ""), [article?.body])
 
   function patch<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))

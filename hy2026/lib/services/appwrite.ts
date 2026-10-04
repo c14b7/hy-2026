@@ -3,7 +3,6 @@ import "server-only"
 import { ExecutionMethod, ID, Query } from "node-appwrite"
 
 import {
-  mapAdaptation,
   mapBeneficiary,
   mapChallenge,
   mapGrant,
@@ -450,15 +449,16 @@ export function createAppwriteServices(): Services {
             location: options?.location,
             challengeId: options?.challengeId,
           })
-          const items = Array.isArray(res.items) ? (res.items as never[]) : []
-          if (items.length === 0) {
-            throw new Error("empty match-need result")
+          const items = Array.isArray(res.items) ? (res.items as { score?: number }[]) : []
+          const best = items.reduce((m, i) => Math.max(m, Number(i.score) || 0), 0)
+          if (items.length === 0 || best < 40) {
+            throw new Error("weak match-need result")
           }
           return {
             id: str(res.id) || `match-${Date.now()}`,
             query,
             keywords: Array.isArray(res.keywords) ? res.keywords.map(String) : [],
-            items,
+            items: items as never[],
             createdAt: str(res.createdAt) || new Date().toISOString(),
           }
         } catch {

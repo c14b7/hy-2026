@@ -55,7 +55,28 @@ Auth w UI pozostaje demo (`RoleProvider` / localStorage) — bez pełnego Appwri
 | Panel | `/panel/*` | sidebar organizacji |
 | Login | `/login?to=portal\|panel` | dual entry |
 
+## Deploy (produkcja)
+
+Aplikacja buduje się jako standardowy Next.js (`npm run build` / `npm start`).
+
+### Wymagane zmienne środowiskowe na hoście (Vercel / Node)
+
+Skopiuj z `.env.local.example` / `.env.appwrite`:
+
+| Zmienna | Uwagi |
+|---------|--------|
+| `NEXT_PUBLIC_APPWRITE_ENDPOINT` | np. `https://fra.cloud.appwrite.io/v1` |
+| `NEXT_PUBLIC_APPWRITE_PROJECT_ID` | ID projektu |
+| `APPWRITE_API_KEY` | **tylko serwer** — nie `NEXT_PUBLIC_` |
+| `APPWRITE_DATABASE_ID` | `most` |
+| `MOST_DATA_SOURCE` | `appwrite` |
+| `NEXT_PUBLIC_MOST_DATA_SOURCE` | `appwrite` (ten sam tryb w przeglądarce) |
+
+Przed deployem: `npm run typecheck && npm run lint && npm run build`.
+
+Offline / CI bez Cloud: ustaw `MOST_DATA_SOURCE=mock` i `NEXT_PUBLIC_MOST_DATA_SOURCE=mock`.
+
 ## Skrypty npm
 
-- `npm run dev` / `build` / `typecheck` / `lint`
+- `npm run dev` / `build` / `start` / `typecheck` / `lint`
 - `npm run appwrite:export-seed` / `appwrite:setup` / `appwrite:seed` / `appwrite:deploy-functions` / `appwrite:smoke`
